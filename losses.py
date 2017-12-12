@@ -21,13 +21,11 @@ def ssim_loss(y_true, y_pred,
     with tf.name_scope('SSIM_loss'):
         bs, h, w, c = y_true.shape
 
-        _y_true = tf.constant(np.array(y_true))
-        _y_true = tf.transpose(_y_true, (0, 3, 1, 2))
+        _y_true = tf.transpose(y_true, (0, 3, 1, 2))
         _y_true = tf.reshape(_y_true, (bs*c, h, w))
         _y_true = tf.expand_dims(_y_true, axis=-1)
 
-        _y_pred = tf.constant(np.array(y_pred))
-        _y_pred = tf.transpose(_y_pred, (0, 3, 1, 2))
+        _y_pred = tf.transpose(y_pred, (0, 3, 1, 2))
         _y_pred = tf.reshape(_y_pred, (bs*c, h, w))
         _y_pred = tf.expand_dims(_y_pred, axis=-1)
 
@@ -95,6 +93,6 @@ if __name__ == '__main__':
     im = np.expand_dims(im, 0)
     im = im.astype('float32') / 255
     sess = tf.Session()
-    # l = ssim_loss(im, im)
-    l = make_laplacian_pyramid(im)
+    l = ssim_loss(im, im)
+    # l = make_laplacian_pyramid(im)
     tf.summary.FileWriter('logs', graph=sess.graph)
