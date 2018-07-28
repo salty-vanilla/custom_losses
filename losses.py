@@ -16,14 +16,14 @@ def make_gauss_kernel(kernel_size, sigma):
     return g
 
 
-def ssim_loss(y_true, 
+def calc_ssim(y_true, 
               y_pred, 
               L=1.0, 
               K1=0.01, 
               K2=0.03,
               kernel_size=(3, 3), 
               sigma=1.0):
-    """SSIM loss function
+    """SSIM
     paper: https://ece.uwaterloo.ca/~z70wang/research/ssim/
     
     # Arguments
@@ -36,7 +36,7 @@ def ssim_loss(y_true,
         sigma: float parameter of gaussian.
     # Returns
         4D Tensor (None, h-p, w-p, c).
-        Each element of the tensor represents 1/ssim .
+        Each element of the tensor represents SSIM .
     """
     
     bs, h, w, c = y_true.get_shape().as_list()
@@ -63,6 +63,35 @@ def ssim_loss(y_true,
 
     ssim = (2*mu_true_pred + C1) * (2*sigma_true_pred + C2)
     ssim /= (mu_true_true + mu_pred_pred + C1) * (sigma_true_true + sigma_pred_pred + C2)
+    return ssim
+
+
+def ssim_loss(y_true, 
+              y_pred, 
+              L=1.0, 
+              K1=0.01, 
+              K2=0.03,
+              kernel_size=(3, 3), 
+              sigma=1.0):
+    """SSIM loss function 
+    paper: https://ece.uwaterloo.ca/~z70wang/research/ssim/
+    
+    # Arguments
+        y_true: tensor of true targets.
+        y_pred: tensor of predicted targets.
+        L: float hyper parameter of SSIM.
+        K1: float hyper parameter of SSIM.
+        K2: float hyper parameter of SSIM.
+        kernel_size: size of gaussian kernel. (x, y)
+        sigma: float parameter of gaussian.
+    # Returns
+        4D Tensor (None, h-p, w-p, c).
+        Each element of the tensor represents "1/ssim" .
+    """
+
+    ssim = calc_ssim(y_true, y_pred, 
+                     L, K1, K2, 
+                     kernel_size, sigma)
     return 1 / (ssim + 1e-6)
 
 
@@ -104,3 +133,22 @@ def make_laplacian_pyramid(x,
         diff = high_reso - up_low_reso
         l_pyr.append(diff)
     return l_pyr
+
+
+def lapl1_loss(y_true, 
+               y_pred,
+               max_level=5,
+               kernel_size=(3, 3), 
+               sigma=1.0, 
+               gaussian_iteration=1):
+    true_pyr = make_laplacian_pyramid(y_true, max_level, kernel_size, sigma, gaussian_iteration)
+    pred_pyr = make_laplacian_pyramid(y_pred, max_level, kernel_size, sigma, gaussian_iteration)
+    
+    diffs = []
+    for t, p in zip(true_pyr, pred_pyr):
+        d = tf.reduce_mean(tf.abs(t - p), axis=[1, 2, 3])
+        diffs.append(tf.expand_dims(d, axis=-1))
+    diffs = tf.concat(diffs, axis=-1)
+    diffs = tf.reduce_mean(diffs, axis=-1)
+    return diffs
+
