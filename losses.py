@@ -92,7 +92,7 @@ def ssim_loss(y_true,
     ssim = calc_ssim(y_true, y_pred, 
                      L, K1, K2, 
                      kernel_size, sigma)
-    return 1 - tf.reduce_mean(ssim, axis=[1, 2, 3]) + 1e-6)
+    return 1. - tf.reduce_mean(ssim, axis=[1, 2, 3])
 
 
 def make_gaussian_pyramid(x, 
