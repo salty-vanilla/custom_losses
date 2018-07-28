@@ -85,14 +85,14 @@ def ssim_loss(y_true,
         kernel_size: size of gaussian kernel. (x, y)
         sigma: float parameter of gaussian.
     # Returns
-        4D Tensor (None, h-p, w-p, c).
-        Each element of the tensor represents "1/ssim" .
+        Tensor with one scalar loss entry per sample.
+        Each scalar represents "1 - ssim" .
     """
 
     ssim = calc_ssim(y_true, y_pred, 
                      L, K1, K2, 
                      kernel_size, sigma)
-    return 1 / (ssim + 1e-6)
+    return 1 - tf.reduce_mean(ssim, axis=[1, 2, 3]) + 1e-6)
 
 
 def make_gaussian_pyramid(x, 
