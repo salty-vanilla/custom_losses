@@ -22,7 +22,23 @@ def ssim_loss(y_true,
               K1=0.01, 
               K2=0.03,
               kernel_size=(3, 3), 
-              sigma=1.0):    
+              sigma=1.0):
+    """SSIM loss function
+    paper: https://ece.uwaterloo.ca/~z70wang/research/ssim/
+    
+    # Arguments
+        y_true: tensor of true targets.
+        y_pred: tensor of predicted targets.
+        L: float hyper parameter of SSIM.
+        K1: float hyper parameter of SSIM.
+        K2: float hyper parameter of SSIM.
+        kernel_size: size of gaussian kernel. (x, y)
+        sigma: float parameter of gaussian.
+    # Returns
+        4D Tensor (None, h-p, w-p, c).
+        Each element of the tensor represents 1/ssim .
+    """
+    
     bs, h, w, c = y_true.get_shape().as_list()
     
     _y_true = y_true
@@ -45,9 +61,9 @@ def ssim_loss(y_true,
     sigma_pred_pred = tf.nn.conv2d(_y_pred*_y_pred, g_kernel, strides=[1, 1, 1, 1], padding='VALID') - mu_pred_pred
     sigma_true_pred = tf.nn.conv2d(_y_true*_y_pred, g_kernel, strides=[1, 1, 1, 1], padding='VALID') - mu_true_pred
 
-    loss = (2*mu_true_pred + C1) * (2*sigma_true_pred + C2)
-    loss /= (mu_true_true + mu_pred_pred + C1) * (sigma_true_true + sigma_pred_pred + C2)
-    return loss
+    ssim = (2*mu_true_pred + C1) * (2*sigma_true_pred + C2)
+    ssim /= (mu_true_true + mu_pred_pred + C1) * (sigma_true_true + sigma_pred_pred + C2)
+    return 1 / (ssim + 1e-6)
 
 
 def make_gaussian_pyramid(x, 
